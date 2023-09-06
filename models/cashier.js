@@ -13,12 +13,16 @@ const cashierSchema = new mongoose.Schema({
   },
   parameter: {
     type: Number,
-    required: true,
+    default: 5000,
   },
 
   capital: {
     type: Number,
-    required: true,
+    default: 5000
+  },
+  NumberOfGame: {
+    type: Number,
+    default: 0,
   },
 
   numberOfwindfall: {
