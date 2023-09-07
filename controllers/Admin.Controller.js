@@ -1,6 +1,6 @@
-import Admin from "../models/admin";
-import Cashier from "../models/cashier";
-import User from "../models/users";
+import Admin from "../models/admin.js";
+import Cashier from "../models/cashier.js";
+import User from "../models/users.js";
 
 // Create a new cashier
 const createCashier = async (req, res) => {

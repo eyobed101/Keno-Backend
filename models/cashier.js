@@ -48,4 +48,4 @@ const cashierSchema = new mongoose.Schema({
 
 const Cashier = mongoose.model("Cashier", cashierSchema);
 
-module.exports = Cashier;
+export default Cashier;

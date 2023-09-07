@@ -1,22 +1,19 @@
 import express from "express";
-import authServices from "../services/auth.Services";
-import {
-  createCashier,
-  getAllCashiers,
-} from "../controllers/Admin.Controller.js";
-import {
-  createAdmin,
-  getAllAdmins,
-} from "../controllers/SuperAdmin.Controller.js";
-import Role from "../helpers/role";
-import jwt from "../helpers/jwt";
+import {authenticate} from "../services/auth.Services.js";
+import AdminFunctions from "../controllers/Admin.Controller.js";
+import 
+ SuperFunctions
+ from "../controllers/SuperAdmin.Controller.js";
+import {admin, cashier, superadmin} from "../helpers/role.js";
+import jwt from "../helpers/jwt.js";
+import { Draw } from "../controllers/Game.Controller.js";
 
 const router = express.Router();
 
 // Routes
 router.post("/login", async (req, res, next) => {
   try {
-    const user = await authServices.authenticate(req.body);
+    const user = await authenticate(req.body);
     console.log(user);
     if (user) {
       res.json({ user: user, message: "User logged in successfully" });
@@ -28,15 +25,15 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.post("/register", jwt(Role.SuperAdmin), async (req, res, next) => {
+router.post("/register", jwt(superadmin), async (req, res, next) => {
   try {
     const currentUser = req.user;
 
-    if (currentUser.role !== Role.SuperAdmin) {
+    if (currentUser.role !== superadmin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
 
-    const user = await createAdmin(req.body);
+    const user = await SuperFunctions.createAdmin(req.body);
     res.json({
       user: user,
       message: `User Registered successfully with email ${req.body.email}`,
@@ -46,15 +43,15 @@ router.post("/register", jwt(Role.SuperAdmin), async (req, res, next) => {
   }
 });
 
-router.post("/register/cashier", jwt(Role.Admin), async (req, res, next) => {
+router.post("/register/cashier", jwt(admin), async (req, res, next) => {
   try {
     const currentUser = req.user;
 
-    if (currentUser.role !== Role.Admin) {
+    if (currentUser.role !== admin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
 
-    const user = await createCashier(req.body);
+    const user = await AdminFunctions.createCashier(req.body);
     res.json({
       user: user,
       message: `Cashier User Registered successfully with email ${req.body.email}`,
@@ -64,18 +61,21 @@ router.post("/register/cashier", jwt(Role.Admin), async (req, res, next) => {
   }
 });
 
-router.get("/getCashier", jwt(Role.Admin), async (req, res, next) => {
+router.get("/getCashier", jwt(admin), async (req, res, next) => {
   try {
     const currentUser = req.user;
-    if (currentUser.role !== Role.Admin) {
+    if (currentUser.role !== admin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
-    const users = await getAllCashiers();
+    const users = await AdminFunctions.getAllCashiers();
     res.json(users);
   } catch (error) {
     next(error);
   }
 });
+
+
+router.get("/api/playkeno/draw", jwt(cashier), Draw)
 
 // router.get("/current", jwt(), async (req, res, next) => {
 //   try {

@@ -3,10 +3,12 @@ import http from 'http'
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
-import route from "./routes/routes"
+import route from "./routes/main.js"
 import compression from 'compression';
-import connect from "./helpers/db"
-import errorHandler from './helpers/errorHandler';
+import connect from "./helpers/db.js"
+import config from './config/index.js';
+
+import errorHandler from './helpers/errorHandler.js';
 
 
 const app = express();

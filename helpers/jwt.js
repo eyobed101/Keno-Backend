@@ -1,6 +1,6 @@
 import expressJwt from "express-jwt";
-import config from "../config/config.json";
-import db from "./db";
+import config from '../config/index.js';
+import db from "./db.js";
 
 const jwt = (roles = []) => {
   if (typeof roles === "string") {

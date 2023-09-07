@@ -1,6 +1,6 @@
-import Superadmin from "../models/superAdmin" 
-import Admin from "../models/admin" 
-import User from "../models/users" 
+import Superadmin from "../models/superAdmin.js" 
+import Admin from "../models/admin.js" 
+import User from "../models/users.js" 
 
 
 

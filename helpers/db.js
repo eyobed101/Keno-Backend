@@ -1,6 +1,6 @@
-import config from "../config/config.json";
+import config from '../config/index.js';
 import mongoose from "mongoose";
-import User from "../models/users";
+import User from "../models/users.js";
 
 const connectionOptions = {
   useCreateIndex: true,

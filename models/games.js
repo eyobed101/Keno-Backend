@@ -13,7 +13,7 @@ const GameSchema = new mongoose.Schema({
   },
   gameNumber: {
     type: Number,
-    required: true,
+    default: 0
   },
   date: {
     type: Date,
@@ -26,7 +26,7 @@ const GameSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["Opened", "Closed"],
-    default: "Opened",
+    default: "Closed",
   },
   profitability: {
     type: String,
@@ -45,7 +45,7 @@ const GameSchema = new mongoose.Schema({
     {
       id: {
         type: String,
-        required: true,
+        
       },
       amountWon: {
         type: Number,
