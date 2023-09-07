@@ -1,4 +1,4 @@
-import Game from "../models/games";
+import Game from "../models/games.js";
 
 const getAllGamesByCashier = async (req, res) => {
   const { cashierID } = req.params;
