@@ -1,19 +1,23 @@
 import express from "express";
-import {authenticate} from "../services/auth.Services.js";
-import AdminFunctions from "../controllers/Admin.Controller.js";
+import authServices from "../services/auth.Services.js";
 import 
- SuperFunctions
- from "../controllers/SuperAdmin.Controller.js";
-import {admin, cashier, superadmin} from "../helpers/role.js";
-import jwt from "../helpers/jwt.js";
+  AdminFunctions
+ from "../controllers/Admin.Controller.js";
+import 
+  SuperAdminFunctions
+from "../controllers/SuperAdmin.Controller.js";
+import Role from "../helpers/role.js";
+import verifyToken from "../helpers/jwt.js";
 import { Draw } from "../controllers/Game.Controller.js";
+
+
 
 const router = express.Router();
 
 // Routes
 router.post("/login", async (req, res, next) => {
   try {
-    const user = await authenticate(req.body);
+    const user = await authServices.authenticate(req.body);
     console.log(user);
     if (user) {
       res.json({ user: user, message: "User logged in successfully" });
@@ -25,15 +29,15 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.post("/register", jwt(superadmin), async (req, res, next) => {
+router.post("/register", verifyToken(Role.superadmin), async (req, res, next) => {
   try {
     const currentUser = req.user;
 
-    if (currentUser.role !== superadmin) {
+    if (currentUser.role !== Role.superadmin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
 
-    const user = await SuperFunctions.createAdmin(req.body);
+    const user = await SuperAdminFunctions.createAdmin(req.body);
     res.json({
       user: user,
       message: `User Registered successfully with email ${req.body.email}`,
@@ -43,11 +47,11 @@ router.post("/register", jwt(superadmin), async (req, res, next) => {
   }
 });
 
-router.post("/register/cashier", jwt(admin), async (req, res, next) => {
+router.post("/register/cashier", verifyToken(Role.admin), async (req, res, next) => {
   try {
     const currentUser = req.user;
 
-    if (currentUser.role !== admin) {
+    if (currentUser.role !== Role.admin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
 
@@ -61,10 +65,10 @@ router.post("/register/cashier", jwt(admin), async (req, res, next) => {
   }
 });
 
-router.get("/getCashier", jwt(admin), async (req, res, next) => {
+router.get("/getCashier", verifyToken(Role.admin), async (req, res, next) => {
   try {
     const currentUser = req.user;
-    if (currentUser.role !== admin) {
+    if (currentUser.role !== Role.admin) {
       return res.status(401).json({ message: "Not Authorized!" });
     }
     const users = await AdminFunctions.getAllCashiers();
@@ -72,10 +76,51 @@ router.get("/getCashier", jwt(admin), async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+}); 
+
+router.get("/play/keno/draw", verifyToken(Role.cashier), Draw)
 
 
-router.get("/api/playkeno/draw", jwt(cashier), Draw)
+// router.post('/superadmins', async (req, res) => {
+//   // ET_Keno@101Test
+//   // Retrieve the necessary data from the request body
+//   const { firstName, lastName, email, password } = req.body;
+
+//   try {
+//       // Generate a salt for password hashing
+//       const salt = await bcrypt.genSalt(10);
+
+//       // Hash the password using the generated salt
+//       const hashedPassword = await bcrypt.hash(password, salt);
+
+//       // Create a new user instance
+//       const newUser = new User({
+//           firstName,
+//           lastName,
+//           email,
+//           password: hashedPassword, // Save the hashed password
+//           role: 'superadmin' // Set the role as 'superadmin' for the new user
+//       });
+
+//       // Save the user to the database
+//       const savedUser = await newUser.save();
+
+//       // Create a new superadmin instance using the saved user's ID
+//       const newSuperadmin = new Superadmin({
+//           superadminID: savedUser._id,
+//           NumberOfAdmin: 0 // Set the number of admins as required
+//       });
+
+//       // Save the superadmin to the database
+//       await newSuperadmin.save();
+
+//       res.status(201).json({ message: 'Superadmin created successfully' });
+//   } catch (error) {
+//       res.status(500).json({ error: 'Error creating superadmin' });
+//   }
+// });
+
+  
 
 // router.get("/current", jwt(), async (req, res, next) => {
 //   try {

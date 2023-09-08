@@ -1,4 +1,7 @@
 
-export const admin = "admin";
-export const superadmin = "superadmin";
-export const cashier = "cashier";
+const admin = "admin";
+const superadmin = "superadmin";
+const cashier = "cashier";
+
+
+export default {admin, superadmin, cashier}

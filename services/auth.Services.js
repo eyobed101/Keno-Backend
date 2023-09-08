@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import config from '../config/index.js';
+import bcrypt from "bcrypt";
+import config from "../config/index.js"
 import db from "../helpers/db.js";
 
 const User = db.User;
@@ -9,10 +9,11 @@ const User = db.User;
 const authenticate = async ({ email, password }) => {
   // Find the user using email
   const user = await User.findOne({ email });
-  console.log("user model", user);
+  console.log(user)
+
 
   // If user is truthy then sign the token
-  if (user && bcrypt.compareSync(password, user.password)) {
+  if (user && await bcrypt.compare(password, user.password)) {
     
     const token = jwt.sign({ sub: user.id, role: user.role }, config.secret, {
       expiresIn: "1d",
@@ -79,4 +80,4 @@ const authenticate = async ({ email, password }) => {
 // };
 
 // export { authenticate, getAll, getById, create, update, _delete as delete };
-export { authenticate};
+export default { authenticate };

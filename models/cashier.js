@@ -46,6 +46,5 @@ const cashierSchema = new mongoose.Schema({
   }
 });
 
-const Cashier = mongoose.model("Cashier", cashierSchema);
+export default mongoose.model("Cashier", cashierSchema);
 
-export default Cashier;

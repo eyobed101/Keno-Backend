@@ -5,9 +5,8 @@ import express from 'express';
 import helmet from 'helmet';
 import route from "./routes/main.js"
 import compression from 'compression';
-import connect from "./helpers/db.js"
+import connection from "./helpers/db.js"
 import config from './config/index.js';
-
 import errorHandler from './helpers/errorHandler.js';
 
 
@@ -31,7 +30,7 @@ app.use("/", route);
 const server = http.createServer(app);
 
 server.listen(config.port, () => {
-	connect();
+	connection.connect()
 	console.log("I'm connected to the backend!");
 	
 });

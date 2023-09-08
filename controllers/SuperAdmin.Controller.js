@@ -1,22 +1,31 @@
 import Superadmin from "../models/superAdmin.js" 
 import Admin from "../models/admin.js" 
 import User from "../models/users.js" 
+import bcrypt from "bcrypt";
 
 
 
 
 // Create a new admin
 const createAdmin = async (req, res) => {
+  const {firstName, lastName, email, password , NumberOfShop, Revenue, Odd } = req.body;
   try {
     // Extract the required data from the request body
-    const { NumberOfShop, Revenue, Odd } = req.body;
+    // KenoAdminTest@123
+
+    //  Generate a salt for password hashing
+      const salt = await bcrypt.genSalt(10);
+
+      // Hash the password using the generated salt
+      const hashedPassword = await bcrypt.hash(password, salt);
+
 
     // Create a new user
     const user = new User({
         firstName,
         lastName,
         email,
-        password,
+        password: hashedPassword,
         role: "admin", // Set the role as admin
       });
     

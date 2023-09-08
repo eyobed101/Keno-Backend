@@ -1,14 +1,14 @@
 import Game from "../models/games.js";
 import Cashier from "../models/cashier.js";
-import  {v1 as uuidv1} from "uuid"
+import { uuid } from 'uuidv4';
 
 let g_NumberOfGame = 0;
-let g_NumberOfPlayer = 0;
 let CondtionOfHighWin = false;
 let g_Capital = 0;
 let g_Parameter = 0;
 let g_WindFall = 0;
 let g_newParameter = 0;
+let g_Profitablility = " ";
 let tickets = [];
 let U_unSelectedNumbersInTickets = [];
 let U_selectedNumbersInTickets = [];
@@ -24,11 +24,11 @@ let HighOddWinnertickets = [];
 let nominatedNumsToBeRemoved = [];
 let nominatedNumsToBeRemovedByOdd = [];
 let totalMoneyForLuckeyTickets = 0;
-let g_profitability = " "
 
 let AllNumbersInTickets = [];
 
 export const Draw = async (req, res) => {
+
   // Find the game related values if there is any past history
 
   let NumberOfGame = await Cashier.findOne(
@@ -39,7 +39,7 @@ export const Draw = async (req, res) => {
   let Parameter = await Cashier.findOne({ cashierID: req._id }, "parameter");
   let Windfall = await Cashier.findOne({ cashierID: req._id }, "windfall");
 
-  // Start to accept the request and begin to process a single game
+
   g_NumberOfGame = NumberOfGame;
   g_Capital = Capital;
   g_Parameter = Parameter;
@@ -49,10 +49,10 @@ export const Draw = async (req, res) => {
     const Tickets = await req.body.tickets; // receving the tickets to be processed
     tickets = Tickets; // duplicate these ticket values for important purpose
 
-    g_NumberOfPlayer = Tickets.length
-    // check whether these particular game send no tickets so that no alter will happen
+    let NumberOfPlayer = Tickets.length
     if (!Tickets || Tickets.length < 1)
       return res.status(201).json("Not sucessful");
+
 
     let rand = RandomNumberGenerator(1, 80, 20); // generate random 20 numbers
     let random = [...new Set(rand)];
@@ -66,8 +66,8 @@ export const Draw = async (req, res) => {
       }
     }
 
-    U_selectedNumbersInTickets = SelectedNumbersUnion(Tickets);
-    U_unSelectedNumbersInTickets = UnselectedNumbersUnion(
+    U_selectedNumbersInTickets = selectedNumbersUnion(Tickets);
+    U_unSelectedNumbersInTickets = UnselectedNumbersFun(
       U_selectedNumbersInTickets
     );
     AllSelectedNumbers(Tickets);
@@ -80,8 +80,6 @@ export const Draw = async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-
-// ############################### Cashier Data Updated #############################
 
   await Cashier.findOneAndUpdate(
     { cashierID: req._id }, // Replace cashierId with the actual ID of the cashier you want to update
@@ -100,35 +98,36 @@ export const Draw = async (req, res) => {
 
   await Cashier.findOneAndUpdate(
     { cashierID: req._id }, // Replace cashierId with the actual ID of the cashier you want to update
-    { $set: { windfall: g_Parameter } } // Set the windfall field to the new value
+    { $set: { windfall: g_WindFall } } // Set the parameter field to the new value
   );
 
 
-//################################ Game Data Store #############################
-async function createGame() {
-  try {
-    const newGame = new Game({
-      cashierID: req._id,
-      gameID: uuidv1.v4,
-      gameNumber: (g_NumberOfGame + 1),
-      date: new Date(),
-      result: FinalNumbers,
-      status: 'Closed',
-      profitability: g_profitability,
-      unclaimedMoney: (totalAssignedMoney - totalLuckyMoney),
-      numberOfPlayer: g_NumberOfPlayer,
-      winner: winnertickets.map(({ ticket, win }) => ({ id: ticket, amountWon: win })),
-    });
-
-    await newGame.save();
-  } catch (error) {
-    console.error('Error saving game:', error);
+  async function createGame() {
+    try {
+      const newGame = new Game({
+        cashierID: req._id,
+        gameID: uuid,
+        gameNumber: (g_NumberOfGame + 1),
+        date: new Date(),
+        result: FinalNumbers,
+        status: 'Closed',
+        profitability: g_Profitablility,
+        unclaimedMoney: 0,
+        numberOfPlayer: NumberOfPlayer,
+        winner: winnerTickets.map(({ ticket, win }) => ({ id: ticket, amountWon: win })),
+      });
+  
+      await newGame.save();
+    } catch (error) {
+      console.error('Error saving game:', error);
+    }
   }
-}
-
-createGame();
+  
+  createGame();
 
 };
+
+
 
 // All Selected Numbers in The Tickets function
 const AllSelectedNumbers = (tickets) => {
@@ -146,6 +145,7 @@ const AllSelectedNumbers = (tickets) => {
   }
   return AllNumbersInTickets;
 };
+
 
 const totalMoneyCollected = (t) => {
   let total = 0;
@@ -244,18 +244,20 @@ const oddGenerator = (totalNumber, luckyNumbers) => {
   }
 };
 
+
 const RandomNumberGenerator = (min, max, n = 1) =>
   Array.from(
     { length: n },
     () => Math.floor(Math.random() * (max - min + 1)) + min
   );
 
-const SelectedNumbersUnion = (tickets) => {
+const selectedNumbersUnion = (tickets) => {
   for (let i = 0; i < tickets.length; i++) {
     for (let j = 0; j < tickets[i].numbers.length; j++) {
       if (Array.isArray(tickets[i].numbers[j])) {
         for (let k = 0; k < tickets[i].numbers[j].length; k++) {
           if (!U_selectedNumbersInTickets.includes(tickets[i].numbers[j][k])) {
+
             U_selectedNumbersInTickets.push(tickets[i].numbers[j][k]);
           }
         }
@@ -267,7 +269,7 @@ const SelectedNumbersUnion = (tickets) => {
   return U_selectedNumbersInTickets;
 };
 
-const UnselectedNumbersUnion = (numbers) => {
+const UnselectedNumbersFun = (numbers) => {
   for (let i = 1; i < 81; i++) {
     if (!numbers.includes(i)) {
       U_unSelectedNumbersInTickets.push(i);
@@ -298,8 +300,7 @@ const totalMoneyAssignForGame = (tic) => {
 
   let getTotalMoneyCollected = totalMoneyCollected(tic);
 
-  g_newParameter =
-    15 * +g_NumberOfGame + 5000 + 300 * Math.cos(5 * +g_NumberOfGame);
+  g_newParameter = 15 * +g_NumberOfGame + 5000 + 300 * Math.cos(5 * +g_NumberOfGame);
 
   divider = +g_newParameter - +g_Parameter;
 
@@ -307,6 +308,7 @@ const totalMoneyAssignForGame = (tic) => {
   let TransMoney = 0;
 
   if (divider < 0) {
+    
     multiplier = g_newParameter / +g_Parameter;
 
     if (multiplier > 0.6) {
@@ -317,19 +319,22 @@ const totalMoneyAssignForGame = (tic) => {
 
     let randomLuckeyNumber = Math.floor(Math.random() * 3) + 1;
 
+
     if (g_WindFall > 0 && randomLuckeyNumber === 2) {
       CondtionOfHighWin = true;
-      TotalMoneyCollected = getTotalMoneyCollected + g_WindFall + TransMoney;
+      TotalMoneyCollected =
+        getTotalMoneyCollected + g_WindFall + TransMoney;
       g_WindFall = 0;
     } else {
       TotalMoneyCollected = getTotalMoneyCollected + TransMoney;
-      g_profitability = "Gain"
+      g_Profitablility = "Loss"
+
     }
 
     MainAccountNow = g_Capital - TransMoney;
     g_Capital = MainAccountNow;
+
   } else if (divider > 0) {
-    g_profitability = "Loss"
     multiplier = +g_Parameter / g_newParameter;
     if (multiplier > 0.6) {
       multiplier = 0.6;
@@ -340,13 +345,19 @@ const totalMoneyAssignForGame = (tic) => {
 
     MainAccountNow = g_Capital + TransMoney;
 
+    g_Profitablility = "Gain"
+
+
     g_Capital = MainAccountNow;
+
   } else {
     TotalMoneyCollected = getTotalMoneyCollected;
   }
 
+
   return TotalMoneyCollected;
 };
+
 
 const mode = (array) => {
   if (array.length === 0) return null;
@@ -365,6 +376,7 @@ const mode = (array) => {
   return maxEl;
 };
 
+
 const getSingleTicketMoney = (rand, tic) => {
   totalMoneyForLuckyTicket = 0;
 
@@ -372,7 +384,7 @@ const getSingleTicketMoney = (rand, tic) => {
 
   nominatedNumsToBeRemoved = mode(AllNumbersInTickets);
 
-  let Odd = 0;
+  var Odd = 0;
   luckyTicketsId = [];
   luckyTicketIdMulti = [];
   for (let i = 0; i < rand.length; i++) {
@@ -433,10 +445,10 @@ const getSingleTicketMoney = (rand, tic) => {
       HighOddWinnertickets.push({ ticket: tic.id, odd: Odd });
     }
 
-    totalMoneyForLuckyTicket = tic.money * Odd;
-    
 
-    // nominatedNumsToBeRemovedByOdd = [];
+    totalMoneyForLuckyTicket = tic.money * Odd;
+
+
     if (Odd > biggestOdd) {
       biggestOdd = Odd;
       nominatedNumsToBeRemovedByOdd = luckyNum.filter((x) =>
@@ -448,16 +460,19 @@ const getSingleTicketMoney = (rand, tic) => {
   return totalMoneyForLuckyTicket;
 };
 
+
 const getTotalMoneyForAllLuckyTickets = (rand, tics) => {
   winnertickets = [];
   totalMoneyForLuckeyTickets = 0;
   for (let i = 0; i < tics.length; i++) {
     totalMoneyForLuckeyTickets =
       totalMoneyForLuckeyTickets + getSingleTicketMoney(rand, tics[i]);
+
   }
 
   return totalMoneyForLuckeyTickets;
 };
+
 
 const remover = (rand, num) => {
   let NumRemoved = num[num.length - 1];
@@ -467,6 +482,7 @@ const remover = (rand, num) => {
       newRandom.push(rand[i]);
     }
   }
+
 
   let itration = 20 - newRandom.length;
 
@@ -478,11 +494,10 @@ const remover = (rand, num) => {
       }
     }
 
-    U_unSelectedNumbersInTickets = U_unSelectedNumbersInTickets.filter(
-      function (item) {
-        return item !== value;
-      }
-    );
+    U_unSelectedNumbersInTickets = U_unSelectedNumbersInTickets.filter(function (item) {
+      return item !== value;
+    });
+
   } else {
     while (newRandom.length < 20) {
       let itr = random_item(getRandNoDup);
@@ -505,7 +520,6 @@ const remover = (rand, num) => {
 // DoHighWinner is a function to slecte optimized random numbers that resembles to one high winner
 
 const DoHighWinner = (rand, tic, totalAssignedMoney) => {
-  let newRand = [];
   let MoneyBetByWinner = 0;
   let NumberIntheBet = 0;
   let SizeOfTicket = tic.length;
@@ -535,10 +549,13 @@ const DoHighWinner = (rand, tic, totalAssignedMoney) => {
       }
     }
 
+
     for (let i = 0; i < NumberOfLuckeyNumbersToBe; i++) {
+
       const randomIndex = Math.floor(Math.random() * rand.length);
       rand.splice(randomIndex, 1);
     }
+
 
     for (let i = 0; i < NumberOfLuckeyNumbersToBe; i++) {
       for (let j = 0; j < U_selectedNumbersInTickets.length; j++) {
@@ -567,14 +584,15 @@ const DoHighWinner = (rand, tic, totalAssignedMoney) => {
       }
     }
 
-    // remove n number of elements from randomly selected array that exists in SelectedNums if there are any
     for (let i = 0; i < NumberOfLuckeyNumbersToBe; i++) {
+
       const randomIndex = Math.floor(Math.random() * rand.length);
       rand.splice(randomIndex, 1);
     }
 
+
     for (let i = 0; i < NumberOfLuckeyNumbersToBe; i++) {
-      for (let j = 0; j < selectedNums.length; j++) {
+      for (let j = 0; j < U_selectedNumbersInTickets.length; j++) {
         if (
           !rand.includes(U_selectedNumbersInTickets[j]) &&
           HighWinnerToBe.numbers.includes(U_selectedNumbersInTickets[j])
@@ -585,6 +603,7 @@ const DoHighWinner = (rand, tic, totalAssignedMoney) => {
       }
     }
   }
+
 
   let itration = 20 - rand.length;
 
@@ -602,6 +621,7 @@ const DoHighWinner = (rand, tic, totalAssignedMoney) => {
   return rand;
 };
 
+
 const decisionMaker = (rand, tic) => {
   var totalLuckyMoney = getTotalMoneyForAllLuckyTickets(rand, tic);
 
@@ -609,19 +629,16 @@ const decisionMaker = (rand, tic) => {
 
   if (CondtionOfHighWin) {
     let highWinnerRand = DoHighWinner(rand, tic, totalAssignedMoney);
-    g_WindFall = g_WindFall + (totalAssignedMoney - totalLuckyMoney);
-    g_profitability = "Win"
+    g_Profitablility = "Win"
     return highWinnerRand;
   } else {
+
     if (totalLuckyMoney > totalAssignedMoney) {
       HighOddWinnertickets = [];
       winnertickets = [];
       remover(rand, nominatedNumsToBeRemovedByOdd);
-      g_WindFall = g_WindFall + (totalAssignedMoney - totalLuckyMoney);
-      
     } else {
       g_WindFall = g_WindFall + (totalAssignedMoney - totalLuckyMoney);
-      
     }
     return rand;
   }

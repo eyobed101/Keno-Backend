@@ -1,18 +1,26 @@
 import Admin from "../models/admin.js";
 import Cashier from "../models/cashier.js";
 import User from "../models/users.js";
+import bcrypt from "bcrypt";
 
 // Create a new cashier
 const createCashier = async (req, res) => {
   try {
     // Extract the required data from the request body
     const { parameter, capital } = req.body;
+
+     // Generate a salt for password hashing
+      const salt = await bcrypt.genSalt(10);
+
+       // Hash the password using the generated salt
+      const hashedPassword = await bcrypt.hash(password, salt);
+
     // Create a new user
     const user = new User({
       firstName,
       lastName,
       email,
-      password,
+      password: hashedPassword,
       role: "cashier", // Set the role as cashier
     });
 
